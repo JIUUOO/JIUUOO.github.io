@@ -18,6 +18,11 @@
     "url": "https://github.com/mmistakes/minimal-mistakes/issues"
   },
   "homepage": "https://mmistakes.github.io/minimal-mistakes/",
+  "scripts": {
+    "setup": "bundle install && npm install",
+    "dev": "bundle exec jekyll serve",
+    "sync": "node --env-file=.env.local _scripts/notion-sync.js"
+  },
   "engines": {
     "node": ">= 0.10.0"
   },
