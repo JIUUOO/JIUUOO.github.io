@@ -314,4 +314,7 @@ defaults:
       comments: # true
       share: false
       related: true
+      toc: true
+      toc_sticky: true
       excerpt: ""
+      math: true
