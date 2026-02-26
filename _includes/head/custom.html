@@ -20,5 +20,27 @@
 />
 <link rel="manifest" href="/assets/images/favicons/site.webmanifest" />
 
+{% if page.math %}
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [
+        ["$", "$"],
+        ["\\(", "\\)"],
+      ],
+      displayMath: [
+        ["$$", "$$"],
+        ["\\[", "\\]"],
+      ],
+      processEscapes: true,
+    },
+  };
+</script>
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+></script>
+{% endif %}
 
 <!-- end custom head snippets -->
