@@ -130,7 +130,6 @@ categories: ["${category}"]
 tags: ["${tags.join('", "')}"]
 description: "${description}"
 permalink: /posts/${pageId}
-math: true
 ${imageFrontmatter}---
 
 `;
