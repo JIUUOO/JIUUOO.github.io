@@ -141,7 +141,10 @@
         {% endif %}
 
         {% if currLevel > lastLevel and flatToc == false %}
-            {% capture jekyll_toc %}{{ jekyll_toc }}<{{ listModifier }}{{ subMenuClass }}>{% endcapture %}
+            {% assign diff = currLevel | minus: lastLevel %}
+            {% for i in (1..diff) %}
+                {% capture jekyll_toc %}{{ jekyll_toc }}<{{ listModifier }}{{ subMenuClass }}>{% endcapture %}
+            {% endfor %}
         {% elsif currLevel < lastLevel and flatToc == false %}
             {% assign repeatCount = lastLevel | minus: currLevel %}
 
