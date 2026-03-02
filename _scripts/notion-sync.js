@@ -125,8 +125,9 @@ function shiftHeadings(blocks) {
     const tags = (page.properties?.tags?.multi_select || []).map((t) => t.name);
 
     // Date (date)
-    const date =
+    const rawDate =
       page.properties?.date?.date?.start || moment().format("YYYY-MM-DD");
+    const date = moment(rawDate).format("YYYY-MM-DD");
 
     // Convert Notion blocks to Markdown
     const mdBlocks = await n2m.pageToMarkdown(page.id);
