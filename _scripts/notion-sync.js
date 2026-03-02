@@ -5,6 +5,7 @@
 const { Client } = require("@notionhq/client");
 const { NotionToMarkdown } = require("notion-to-md");
 const moment = require("moment");
+const pLimit = require("p-limit"); // 병렬 처리를 위해 추가
 const { writeFileSync, mkdirSync } = require("fs");
 const { join } = require("path");
 
@@ -93,49 +94,56 @@ function shiftHeadings(blocks) {
   const folder = "_posts"; // TODO: update if exporting to a different collection/menu
   mkdirSync(folder, { recursive: true });
 
+  // 병렬 처리 제한 (한 번에 5개씩 처리)
+  const limit = pLimit(5);
+
   // Convert each page to Markdown and write to `_posts`
-  for (const page of response.results) {
-    // Title (title property)
-    const title = page.properties?.title?.title?.[0]?.plain_text || "Untitled";
+  const tasks = response.results.map((page) =>
+    limit(async () => {
+      // Title (title property)
+      const title =
+        page.properties?.title?.title?.[0]?.plain_text || "Untitled";
 
-    // Page ID (permalink slug); fall back to the Notion page ID
-    const pageId =
-      page.properties?.page_id?.rich_text?.[0]?.plain_text ||
-      page.id.replace(/-/g, "");
+      // Page ID (permalink slug); fall back to the Notion page ID
+      const pageId =
+        page.properties?.page_id?.rich_text?.[0]?.plain_text ||
+        page.id.replace(/-/g, "");
 
-    // Description (rich_text)
-    const description =
-      page.properties?.description?.rich_text?.[0]?.plain_text || "";
+      // Description (rich_text)
+      const description =
+        page.properties?.description?.rich_text?.[0]?.plain_text || "";
 
-    // Thumbnail URL (rich_text)
-    // Include `image:` front matter only if a thumbnail URL exists
-    const thumbnailUrl =
-      page.properties?.thumbnail_url?.rich_text?.[0]?.plain_text;
-    const imageFrontmatter = thumbnailUrl
-      ? `image:
+      // Thumbnail URL (rich_text)
+      // Include `image:` front matter only if a thumbnail URL exists
+      const thumbnailUrl =
+        page.properties?.thumbnail_url?.rich_text?.[0]?.plain_text;
+      const imageFrontmatter = thumbnailUrl
+        ? `image:
   path: "${thumbnailUrl}"
   alt: "preview image"
 `
-      : "";
+        : "";
 
-    // Category (select)
-    const category = page.properties?.category?.select?.name || "blog";
+      // Category (select)
+      const category = page.properties?.category?.select?.name || "blog";
 
-    // Tags (multi_select)
-    const tags = (page.properties?.tags?.multi_select || []).map((t) => t.name);
+      // Tags (multi_select)
+      const tags = (page.properties?.tags?.multi_select || []).map(
+        (t) => t.name,
+      );
 
-    // Date (date)
-    const rawDate =
-      page.properties?.date?.date?.start || moment().format("YYYY-MM-DD");
-    const date = moment(rawDate).format("YYYY-MM-DD");
+      // Date (date)
+      const rawDate =
+        page.properties?.date?.date?.start || moment().format("YYYY-MM-DD");
+      const date = moment(rawDate).format("YYYY-MM-DD");
 
-    // Convert Notion blocks to Markdown
-    const mdBlocks = await n2m.pageToMarkdown(page.id);
-    shiftHeadings(mdBlocks); // Shift Markdown headings
+      // Convert Notion blocks to Markdown
+      const mdBlocks = await n2m.pageToMarkdown(page.id);
+      shiftHeadings(mdBlocks); // Shift Markdown headings
 
-    const mdString = n2m.toMarkdownString(mdBlocks);
+      const mdString = n2m.toMarkdownString(mdBlocks);
 
-    const frontmatter = `---
+      const frontmatter = `---
 title: "${title}"
 date: ${date}
 categories: ["${category}"]
@@ -146,14 +154,19 @@ ${imageFrontmatter}---
 
 `;
 
-    // Filename: YYYY-MM-DD-<pageId>.md
-    const filename = `${date}-${pageId}.md`;
-    const filepath = join(folder, filename);
+      // Filename: YYYY-MM-DD-<pageId>.md
+      const filename = `${date}-${pageId}.md`;
+      const filepath = join(folder, filename);
 
-    // Write file
-    writeFileSync(filepath, frontmatter + mdString.parent);
-    console.log(`Generated: ${filename}`);
-  }
+      // Write file
+      writeFileSync(filepath, frontmatter + mdString.parent);
+      console.log(`Generated: ${filename}`);
+    }),
+  );
+
+  // 모든 작업이 완료될 때까지 대기
+  await Promise.all(tasks);
+  console.log("All tasks completed!");
 })().catch((err) => {
   // Standard error reporting
   console.error("Export failed:", err);
