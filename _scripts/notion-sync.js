@@ -27,6 +27,17 @@ n2m.setCustomTransformer("image", async (block) => {
   return `![image](${proxyUrl})`;
 });
 
+// Convert "plain text" code blocks to generic code blocks (remove "plain text" label)
+n2m.setCustomTransformer("code", async (block) => {
+  const { code } = block;
+
+  // If language is "plain text", set it to empty string to render as ```
+  const language = code.language === "plain text" ? "" : code.language;
+  const content = code.rich_text.map((t) => t.plain_text).join("");
+
+  return `\`\`\`${language}\n${content}\n\`\`\``;
+});
+
 /**
  * Shift Markdown headings down by one level within a Notion-to-Markdown block tree.
  * - heading_1: "# "   -> "## "
