@@ -102,21 +102,26 @@ function shiftHeadings(blocks) {
     limit(async () => {
       // Title (title property)
       const title =
-        page.properties?.title?.title?.[0]?.plain_text || "Untitled";
+        page.properties?.title?.title?.map((t) => t.plain_text).join("") ||
+        "Untitled";
 
       // Page ID (permalink slug); fall back to the Notion page ID
       const pageId =
-        page.properties?.page_id?.rich_text?.[0]?.plain_text ||
-        page.id.replace(/-/g, "");
+        page.properties?.page_id?.rich_text
+          ?.map((t) => t.plain_text)
+          .join("") || page.id.replace(/-/g, "");
 
       // Description (rich_text)
       const description =
-        page.properties?.description?.rich_text?.[0]?.plain_text || "";
+        page.properties?.description?.rich_text
+          ?.map((t) => t.plain_text)
+          .join("") || "";
 
       // Thumbnail URL (rich_text)
       // Include `image:` front matter only if a thumbnail URL exists
-      const thumbnailUrl =
-        page.properties?.thumbnail_url?.rich_text?.[0]?.plain_text;
+      const thumbnailUrl = page.properties?.thumbnail_url?.rich_text
+        ?.map((t) => t.plain_text)
+        .join("");
       const imageFrontmatter = thumbnailUrl
         ? `image:
   path: "${thumbnailUrl}"
